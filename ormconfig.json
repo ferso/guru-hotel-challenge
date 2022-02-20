@@ -1,0 +1,9 @@
+{
+  "type": "mongodb",
+  "host": "localhost",
+  "database": "hotel-price-api",
+  "synchronize": true,
+  "logging": true,
+  "entities": ["src/**/*.entity.ts"],
+  "useUnifiedTopology": true
+}
