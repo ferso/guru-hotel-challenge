@@ -7,7 +7,7 @@ export interface HotelProps {
   name?: string;
   city?: string;
   state?: string;
-  room?: Room;
+  rooms?: Room[];
   remote_id?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -23,19 +23,21 @@ export class Hotel {
   updated_at?: Date;
 
   constructor(props?: HotelProps) {
-    this.setId(props.id);
-    this.setName(props.name);
-    this.setCity(props.city);
-    this.setState(props.state);
-    this.setRemoteId(props.remote_id);
-    this.setCreatedAt(props.created_at);
-    this.setUpdatedAt(props.updated_at);
+    this.setId(props?.id);
+    this.setName(props?.name);
+    this.setCity(props?.city);
+    this.setState(props?.state);
+    this.setRemoteId(props?.remote_id);
+    this.setCreatedAt(props?.created_at);
+    this.setUpdatedAt(props?.updated_at);
   }
   setId(id: string) {
     this.id = id;
   }
   setRemoteId(id: number) {
-    this.remote_id = id;
+    if (id !== null) {
+      this.remote_id = id;
+    }
   }
   setName(name: string) {
     this.name = name;

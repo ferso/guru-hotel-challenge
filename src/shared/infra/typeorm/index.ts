@@ -9,12 +9,13 @@ export class Orm {
     this.logger = new Logger();
     return this;
   }
-  async execute(): Promise<Orm> {
+  async execute(next?: Function): Promise<Orm> {
     return new Promise(async (resolve, reject) => {
       try {
         createConnection().then(async (connection) => {
           globalThis.connection = connection;
           this.logger.logger.info("DATABASE CONECTION DONE");
+          next();
           return resolve(this);
         });
         return resolve(this);

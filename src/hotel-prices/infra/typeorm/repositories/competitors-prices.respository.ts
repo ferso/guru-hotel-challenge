@@ -1,14 +1,21 @@
 import { CompetitorPrice } from "src/hotel-prices/domain/model/competitor-price.model";
 import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { Room } from "src/hotel-prices/domain/model/room.model";
-import { getConnection, getRepository, Repository } from "typeorm";
+import { pipeline } from "stream";
+import {
+  getConnection,
+  getMongoRepository,
+  getRepository,
+  MongoRepository,
+  Repository,
+} from "typeorm";
 import { CompetitorPriceEntity } from "../entities/competitors-prices.entity";
 import { CompetitorPriceMapper } from "../mappers/competitor-price.mapper";
 
 export class CompetitorsPricesRepository {
-  repository: Repository<CompetitorPriceEntity>;
+  repository: MongoRepository<CompetitorPriceEntity>;
   constructor() {
-    this.repository = getRepository(CompetitorPriceEntity);
+    this.repository = getMongoRepository(CompetitorPriceEntity);
   }
   async saveEach(
     competitorsPrice: CompetitorPrice[]
@@ -63,9 +70,9 @@ export class CompetitorsPricesRepository {
   async findRoomDates(room_id: string): Promise<CompetitorPrice[]> {
     const mapper = new CompetitorPriceMapper();
     const response: CompetitorPrice[] = [];
-    let manager = getConnection().mongoManager;
-    let results = await manager
-      .aggregate(CompetitorPriceEntity, [
+
+    let results = await this.repository
+      .aggregate([
         {
           $match: {
             "room.remote_id": room_id,
@@ -103,85 +110,92 @@ export class CompetitorsPricesRepository {
     return response;
   }
 
-  async findBestPrice(room_id: string, date: Date): Promise<CompetitorPrice> {
+  async findBestPrice(
+    room_id: string,
+    room_type: string,
+    date: Date
+  ): Promise<CompetitorPrice> {
     const mapper = new CompetitorPriceMapper();
 
-    let manager = getConnection().mongoManager;
-    let results = await manager
-      .aggregate(CompetitorPriceEntity, [
-        {
-          $match: {
-            "room.remote_id": room_id,
-            date: date,
-          },
+    let pipe = [
+      {
+        $match: {
+          "room.remote_id": room_id,
+          date: date,
         },
-        {
-          $group: {
-            _id: "$price.amount",
-            prices: { $sum: "$price.amount" },
-            avgQuantity: { $avg: "$price.amount" },
-            entity: {
-              $push: {
-                id: "$_id",
-                name: "$name",
-                room_id: "$room.remote_id",
-                date: "$date",
-                room: "$room",
-                price: "$price",
-                created_at: "$created_at",
-                updated_at: "$updated_at",
-              },
+      },
+      {
+        $group: {
+          _id: "$price.amount",
+          prices: { $sum: "$price.amount" },
+          avgQuantity: { $avg: "$price.amount" },
+          entity: {
+            $push: {
+              id: "$_id",
+              name: "$name",
+              room_id: "$room.remote_id",
+              date: "$date",
+              room: "$room",
+              price: "$price",
+              created_at: "$created_at",
+              updated_at: "$updated_at",
             },
           },
         },
-        { $sort: { _id: 1 } },
-        { $limit: 1 },
-      ])
-      .toArray();
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 1 },
+    ];
 
-    return mapper.fromAggregate(results[0].entity[0]);
+    let results = await this.repository.aggregate(pipe).toArray();
+
+    return mapper.fromAggregate(results[0]?.entity[0]);
   }
-  async findWorstPrice(room_id: string, date: Date): Promise<CompetitorPrice> {
+  async findWorstPrice(
+    room_id: string,
+    room_type: string,
+    date: Date
+  ): Promise<CompetitorPrice> {
     const mapper = new CompetitorPriceMapper();
 
-    let manager = getConnection().mongoManager;
-    let results = await manager
-      .aggregate(CompetitorPriceEntity, [
-        {
-          $match: {
-            "room.remote_id": room_id,
-            date: date,
-          },
+    const pipe = [
+      {
+        $match: {
+          "room.remote_id": room_id,
+          date: date,
         },
-        {
-          $group: {
-            _id: "$price.amount",
-            prices: { $sum: "$price.amount" },
-            avgQuantity: { $avg: "$price.amount" },
-            entity: {
-              $push: {
-                id: "$_id",
-                name: "$name",
-                room_id: "$room.remote_id",
-                date: "$date",
-                room: "$room",
-                price: "$price",
-                created_at: "$created_at",
-                updated_at: "$updated_at",
-              },
+      },
+      {
+        $group: {
+          _id: "$price.amount",
+          prices: { $sum: "$price.amount" },
+          avgQuantity: { $avg: "$price.amount" },
+          entity: {
+            $push: {
+              id: "$_id",
+              name: "$name",
+              room_id: "$room.remote_id",
+              date: "$date",
+              room: "$room",
+              price: "$price",
+              created_at: "$created_at",
+              updated_at: "$updated_at",
             },
           },
         },
-        { $sort: { _id: -1 } },
-        { $limit: 1 },
-      ])
-      .toArray();
+      },
+      { $sort: { _id: -1 } },
+      { $limit: 1 },
+    ];
 
-    return mapper.fromAggregate(results[0].entity[0]);
+    let results = await this.repository.aggregate(pipe).toArray();
+
+    return mapper.fromAggregate(results[0]?.entity[0]);
   }
 
   async findAveragePrice(
     room_id: string,
+    room_type: string,
     date: Date
   ): Promise<CompetitorPrice> {
     let prices = [];
@@ -207,25 +221,31 @@ export class CompetitorsPricesRepository {
       ])
       .toArray();
 
-    //create array values
-    for (let x in results) {
-      prices.push(results[x].price);
-    }
+    if (results.length > 0) {
+      //create array values
+      for (let x in results) {
+        prices.push(results[x]?.price);
+      }
 
-    //get the averga value
-    let average: number = prices.reduce((sum, a) => sum + a, 0) / prices.length;
-    // get the value closes to te average
-    const output = prices.reduce((prev, curr) => {
-      return Math.abs(curr - average) < Math.abs(prev - average) ? curr : prev;
-    });
-    //get the document with current data
-    let result = await this.repository.findOne({
-      where: {
-        "room.remote_id": room_id,
-        "price.amount": output,
-        date: date,
-      },
-    });
-    return mapper.fromAggregate(result);
+      //get the averga value
+      let average: number =
+        prices.reduce((sum, a) => sum + a, 0) / prices.length;
+      // get the value closes to te average
+      const output = prices?.reduce((prev, curr) => {
+        return Math.abs(curr - average) < Math.abs(prev - average)
+          ? curr
+          : prev;
+      });
+      //get the document with current data
+      let result = await this.repository.findOne({
+        where: {
+          "room.remote_id": room_id,
+          "price.amount": output,
+          date: date,
+        },
+      });
+      return mapper.fromAggregate(result);
+    }
+    return null;
   }
 }

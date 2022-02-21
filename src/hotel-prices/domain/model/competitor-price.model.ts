@@ -19,12 +19,12 @@ export class CompetitorPrice {
   room?: Room;
   hotel?: Hotel;
   constructor(props?: CompetitorPriceProps) {
-    this.setId(props.id);
-    this.setName(props.name);
-    this.setPrice(props.price);
-    this.setDate(props.date);
-    this.setRoom(props.room);
-    this.setHotel(props.hotel);
+    this.setId(props?.id);
+    this.setName(props?.name);
+    this.setPrice(props?.price);
+    this.setDate(props?.date);
+    this.setRoom(props?.room);
+    this.setHotel(props?.hotel);
   }
 
   setId(id: string) {

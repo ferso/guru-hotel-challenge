@@ -42,19 +42,19 @@ export class Logger {
       );
     }
   }
-  log(message: any) {
-    this.logger.log(message);
+  log(message: any, o?: any) {
+    this.logger.log(message, o);
   }
-  error(message: any) {
-    this.logger.error(message);
+  error(message: any, o?: any) {
+    this.logger.error(message, o);
   }
-  info(message: any) {
-    this.logger.info(message);
+  info(message: any, o?: any) {
+    this.logger.info(message, o);
   }
-  debug(message: any) {
-    this.logger.debug(message);
+  debug(message: any, o?: any) {
+    this.logger.debug(message, o);
   }
-  warn(message: any) {
-    this.logger.warn(message);
+  warn(message: any, o?: any) {
+    this.logger.warn(message, o);
   }
 }

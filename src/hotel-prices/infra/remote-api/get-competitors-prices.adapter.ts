@@ -18,21 +18,23 @@ export class GetCompetitorsPricesAdapter {
     this.logger = new Logger();
     this.http = axios;
   }
-  async execute(id: number, period: number): Promise<CompetitorPrice[]> {
-    let date = moment().utcOffset(0);
-    let startDate = date.format("DD/MM/YYYY");
-    let endDate = date.add(5, "day").format("DD/MM/YYYY");
+  async execute(
+    id: number,
+    start: string,
+    end: string
+  ): Promise<CompetitorPrice[]> {
     try {
       let result = await this.http.get(
-        `http://localhost:5000/hotels/${id}/prices?start_date=${startDate}&end_date=${endDate}`
+        `http://localhost:5000/hotels/${id}/prices?start_date=${start}&end_date=${end}`
       );
+
       return this.mapper(result?.data, id);
     } catch (error) {
       this.logger.error(error.toString());
       throw new UnAvailbleApiError("Remote api is error");
     }
   }
-  formatDate(str) {
+  formatDate(str: string): Date {
     let date = moment(str, "DD/MM/YYYY").utcOffset(0);
     date.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
     return date.toDate();

@@ -1,13 +1,18 @@
 import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { IHotelRepository } from "src/hotel-prices/domain/repositories/hotel.repository";
-import { getConnection, getRepository, Repository } from "typeorm";
+import {
+  getConnection,
+  MongoClient,
+  MongoRepository,
+  getMongoRepository,
+} from "typeorm";
 import { HotelEntity } from "src/hotel-prices/infra/typeorm/entities/hotel.entity";
 import { HotelMapper } from "src/hotel-prices/infra/typeorm/mappers/Hotel.mapper";
 
 export class HotelRepository implements IHotelRepository {
-  hotelRepository: Repository<HotelEntity>;
+  hotelRepository: MongoRepository<HotelEntity>;
   constructor() {
-    this.hotelRepository = getRepository(HotelEntity);
+    this.hotelRepository = getMongoRepository(HotelEntity);
   }
   async save(hotel: Hotel): Promise<Hotel> {
     let result: HotelEntity;
@@ -62,11 +67,10 @@ export class HotelRepository implements IHotelRepository {
 
   async getCheckUpdate(id: any): Promise<boolean> {
     const maxTimeToUpdate = 1;
-    let manager = getConnection().mongoManager;
-    let results = await manager
-      .aggregate(HotelEntity, [
+    let results = await this.hotelRepository
+      .aggregate([
         {
-          $match: { remote_id: 1 },
+          $match: { remote_id: id },
         },
         {
           $project: {
@@ -77,6 +81,7 @@ export class HotelRepository implements IHotelRepository {
         },
       ])
       .toArray();
+
     if (results.length > 0) {
       return results[0].difference > maxTimeToUpdate;
     }
@@ -93,5 +98,31 @@ export class HotelRepository implements IHotelRepository {
   }
   getAll(hotel: Hotel): Promise<Hotel[]> {
     throw new Error("Method not implemented.");
+  }
+
+  async ping(): Promise<any> {
+    try {
+      const config = {
+        connectTimeoutMS: 3,
+        useUnifiedTopology: true,
+      };
+      let connection = this.hotelRepository.manager.connection;
+      const mongodb = (connection.driver as any).mongodb;
+      let client: MongoClient = new mongodb.MongoClient(
+        "mongodb://localhost:27017/hotel-price-api",
+        config
+      ); //
+      client.connect();
+      let tm = setTimeout(() => {
+        client.close();
+        return false;
+      }, 50);
+      await client.db().admin().serverStatus();
+      clearTimeout(tm);
+      client.close();
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }

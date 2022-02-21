@@ -11,6 +11,7 @@ export interface RoomProps {
   hotel?: Hotel;
   hotel_id?: string;
   updated_at?: Date;
+  competitorsPrice?: CompetitorPrice[];
 }
 
 export class Room {
@@ -22,16 +23,16 @@ export class Room {
   amenities?: string[];
   hotel?: Hotel;
   hotel_id?: string;
-  competitorsPrice?: CompetitorPrice[];
+  competitorsPrice?: CompetitorPrice[] = [];
   updated_at?: Date;
   constructor(props?: RoomProps) {
-    this.setRemoteId(props.remote_id);
-    this.setId(props.id || props.remote_id);
-    this.setName(props.name);
-    this.setType(props.type);
-    this.setBedCount(props.bed_count);
-    this.setHotel(props.hotel);
-    this.setUpdatedAt(props.updated_at);
+    this.setRemoteId(props?.remote_id);
+    this.setId(props?.id || props?.remote_id);
+    this.setName(props?.name);
+    this.setType(props?.type);
+    this.setBedCount(props?.bed_count);
+    this.setHotel(props?.hotel);
+    this.setUpdatedAt(props?.updated_at);
   }
 
   setId(id: string) {
@@ -39,7 +40,9 @@ export class Room {
   }
 
   setRemoteId(id: string) {
-    this.remote_id = id;
+    if (id !== null) {
+      this.remote_id = id;
+    }
   }
   setName(name: string) {
     this.name = name;
@@ -62,5 +65,8 @@ export class Room {
   }
   setUpdatedAt(date: Date) {
     this.updated_at = date || new Date();
+  }
+  addCompetitor(competitorsPrice: CompetitorPrice) {
+    this.competitorsPrice.push(competitorsPrice);
   }
 }

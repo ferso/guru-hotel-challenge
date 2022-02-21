@@ -12,9 +12,13 @@ import {
   registerEnumType,
   Field,
   Args,
+  UseMiddleware,
 } from "type-graphql";
 import { EncryptPasswordService } from "../../adapter/encrypt-password.adapter";
 import { GenerateAuthToken } from "../../adapter/generate-auth-token";
+import { AdminGuardAccess } from "../middleware/admin.middleware";
+import { isAuth } from "../middleware/is-auth.middleware";
+import { UserGuardAccess } from "../middleware/user-guard.middleware";
 import { CreateUserInput } from "../types/create-user.input.type";
 import { LoginResponse } from "../types/login-response.type";
 
@@ -37,6 +41,8 @@ export class UserResolver {
       accessToken: user.getToken(),
     };
   }
+  @UseMiddleware(isAuth)
+  @UseMiddleware(AdminGuardAccess)
   @Mutation(() => Boolean)
   async createUser(@Args() input: CreateUserInput) {
     const createUserService = new CreateUserService(

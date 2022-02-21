@@ -5,6 +5,7 @@ import { PingResolver } from "../graphql/resolver/ping.resolver";
 import { HotelResolver } from "src/hotel-prices/infra/graphql/resolvers/hotel.resolver";
 import { ErrorBase } from "src/shared/exceptions/error-base.exception";
 import { UserResolver } from "../graphql/resolver/user.resolver";
+import { authChecker } from "../graphql/middleware/authorization-checker.middleware";
 
 export class ApolloServerAdapter {
   logger: Logger;
@@ -12,7 +13,6 @@ export class ApolloServerAdapter {
 
   constructor() {
     this.logger = new Logger();
-    this.setSetServer();
     return this;
   }
   async setSetServer() {
@@ -34,15 +34,19 @@ export class ApolloServerAdapter {
       },
     });
 
-    this.start();
+    return this;
   }
 
-  start() {
-    this.server?.listen({ port: 3000 }).then(({ url }) => {
-      this.logger.logger.info(
-        "APOLLO SERVER STARTED ",
-        `🚀  Server ready at ${url}`
-      );
+  async start(next?: Function) {
+    await this.setSetServer();
+    return new Promise(async (resolve, reject) => {
+      this.server?.listen({ port: process.env.APP_PORT }).then(({ url }) => {
+        this.logger.logger.info(
+          "APOLLO SERVER STARTED ",
+          `🚀  Server ready at ${url}`
+        );
+        return resolve(this.server);
+      });
     });
   }
 }

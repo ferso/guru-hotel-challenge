@@ -3,8 +3,9 @@ import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { Room } from "src/hotel-prices/domain/model/room.model";
 import { UnAvailbleApiError } from "src/shared/exceptions/unavailable-api.exception";
 import { Logger } from "src/shared/infra/logger/logger";
+import { GetHotelPort } from "src/hotel-prices/domain/ports/get-hotel.port";
 
-export class GetHotelAdapter {
+export class GetHotelAdapter implements GetHotelPort {
   http: AxiosStatic;
   id: number;
   logger: Logger;
