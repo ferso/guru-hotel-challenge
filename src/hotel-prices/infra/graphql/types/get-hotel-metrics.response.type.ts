@@ -7,6 +7,8 @@ import {
   registerEnumType,
   Int,
   ObjectType,
+  Directive,
+  UseMiddleware,
 } from "type-graphql";
 import { HotelMetrics } from "./hotel-metrics.type";
 

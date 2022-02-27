@@ -1,10 +1,7 @@
-import { Field, ID } from "type-graphql";
-import { Column, PrimaryGeneratedColumn } from "typeorm";
+import { RolesType } from "../enums/roles-type";
+import { CreateUserEvent } from "../events/create-user.event";
+import { AggregateRoot } from "./aggregate-root";
 
-export enum RolesType {
-  user = "user",
-  admin = "admin",
-}
 export interface UserProps {
   id?: string;
   name?: string;
@@ -13,8 +10,8 @@ export interface UserProps {
   password?: string;
   role?: RolesType;
 }
-export class User {
-  id?: string;
+
+export class User extends AggregateRoot {
   name: string;
   email: string;
   token?: string;
@@ -22,19 +19,19 @@ export class User {
   private password?: string;
 
   constructor(props?: UserProps) {
+    super();
     this.setId(props.id);
     this.setName(props.name);
     this.setEmail(props.email);
-    this.setPassword(props.password);
     this.setToken(props.token);
+    this.setPassword(props.password);
     this.setRole(RolesType[props.role]);
+  }
+  setName(name: string) {
+    this.name = name;
   }
   setId(id: string) {
     this.id = id;
-  }
-
-  setName(name: string) {
-    this.name = name;
   }
 
   setEmail(email: string) {
@@ -65,5 +62,13 @@ export class User {
       email: this.email,
       role: this.role,
     };
+  }
+
+  protectPassword() {
+    this.password = null;
+  }
+
+  async create(): Promise<void> {
+    await this.emit(new CreateUserEvent(this));
   }
 }

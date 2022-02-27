@@ -1,4 +1,5 @@
-import { RolesType, User } from "src/shared/domain/model/user.model";
+import { RolesType } from "src/shared/domain/enums/roles-type";
+import { User } from "src/shared/domain/model/user.model";
 import { UserEntity } from "../entities/user.entity";
 
 export class UserMapper {

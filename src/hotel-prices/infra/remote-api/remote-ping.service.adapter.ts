@@ -3,7 +3,9 @@ import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { Room } from "src/hotel-prices/domain/model/room.model";
 import { UnAvailbleApiError } from "src/shared/exceptions/unavailable-api.exception";
 import { Logger } from "src/shared/infra/logger/logger";
+import { Service } from "typedi";
 
+@Service()
 export class RemotePingService {
   http: AxiosStatic;
   id: number;
@@ -13,8 +15,11 @@ export class RemotePingService {
     this.http = axios;
   }
   async execute(): Promise<any> {
+    const endpoint = `${process.env.API_URL}/hotels/ping`;
+    this.logger.info(`fetching ping from remote `);
+    this.logger.info(`${endpoint}`);
     try {
-      let result = await this.http.get(`http://localhost:5000/ping`);
+      let result = await this.http.get(endpoint);
       return result.data;
     } catch (error) {
       this.logger.error(error.toString());

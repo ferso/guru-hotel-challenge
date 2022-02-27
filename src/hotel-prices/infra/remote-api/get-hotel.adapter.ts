@@ -4,7 +4,9 @@ import { Room } from "src/hotel-prices/domain/model/room.model";
 import { UnAvailbleApiError } from "src/shared/exceptions/unavailable-api.exception";
 import { Logger } from "src/shared/infra/logger/logger";
 import { GetHotelPort } from "src/hotel-prices/domain/ports/get-hotel.port";
+import { Service } from "typedi";
 
+@Service()
 export class GetHotelAdapter implements GetHotelPort {
   http: AxiosStatic;
   id: number;
@@ -15,7 +17,10 @@ export class GetHotelAdapter implements GetHotelPort {
   }
   async execute(id: number): Promise<Hotel> {
     try {
-      let result = await this.http.get(`http://localhost:5000/hotels/${id}`);
+      const endpoint = `${process.env.API_URL}/hotels/${id}`;
+      let result = await this.http.get(endpoint);
+      this.logger.info(`fetching hotel from remote ${id}`);
+      this.logger.info(`${endpoint}`);
       return this.mapper(result.data, id);
     } catch (error) {
       this.logger.error(error.toString());

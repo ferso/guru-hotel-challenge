@@ -1,32 +1,26 @@
-import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
+import { Service } from "typedi";
 import { CreateUserService } from "src/shared/application/services/create-user.service";
 import { LoginUserService } from "src/shared/application/services/login-user.service";
-import { PeriodType } from "src/shared/domain/enums/period-type";
-import { RolesType } from "src/shared/domain/model/user.model";
 import { Logger } from "src/shared/infra/logger/logger";
 import {
   Resolver,
-  Query,
   Mutation,
   Arg,
   registerEnumType,
-  Field,
   Args,
-  UseMiddleware,
+  Authorized,
 } from "type-graphql";
 import { EncryptPasswordService } from "../../adapter/encrypt-password.adapter";
-import { GenerateAuthToken } from "../../adapter/generate-auth-token";
-import { AdminGuardAccess } from "../middleware/admin.middleware";
-import { isAuth } from "../middleware/is-auth.middleware";
-import { UserGuardAccess } from "../middleware/user-guard.middleware";
 import { CreateUserInput } from "../types/create-user.input.type";
 import { LoginResponse } from "../types/login-response.type";
+import { RolesType } from "src/shared/domain/enums/roles-type";
 
 registerEnumType(RolesType, {
   name: "RolesType",
   description: "Roles types allow are USER, ADMIN",
 });
 
+@Service()
 @Resolver()
 export class UserResolver {
   logger: Logger;
@@ -41,8 +35,8 @@ export class UserResolver {
       accessToken: user.getToken(),
     };
   }
-  @UseMiddleware(isAuth)
-  @UseMiddleware(AdminGuardAccess)
+
+  @Authorized([RolesType.admin])
   @Mutation(() => Boolean)
   async createUser(@Args() input: CreateUserInput) {
     const createUserService = new CreateUserService(

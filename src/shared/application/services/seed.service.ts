@@ -1,4 +1,5 @@
-import { RolesType, User } from "src/shared/domain/model/user.model";
+import { RolesType } from "src/shared/domain/enums/roles-type";
+import { User } from "src/shared/domain/model/user.model";
 import { GenerateAuthToken } from "src/shared/infra/adapter/generate-auth-token";
 import { Logger } from "src/shared/infra/logger/logger";
 import { UserRepository } from "src/shared/infra/typeorm/repository/user.repository";

@@ -1,6 +1,6 @@
 {
   "type": "mongodb",
-  "host": "localhost",
+  "host": "mongo-server",
   "post": 27017,
   "database": "hotel-price-api",
   "synchronize": true,

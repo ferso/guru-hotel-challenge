@@ -1,54 +1,70 @@
 import { CompetitorPrice } from "src/hotel-prices/domain/model/competitor-price.model";
 import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { Room } from "src/hotel-prices/domain/model/room.model";
-import { pipeline } from "stream";
-import {
-  getConnection,
-  getMongoRepository,
-  getRepository,
-  MongoRepository,
-  Repository,
-} from "typeorm";
+import { Service } from "typedi";
+import { getConnection, getMongoRepository, MongoRepository } from "typeorm";
 import { CompetitorPriceEntity } from "../entities/competitors-prices.entity";
 import { CompetitorPriceMapper } from "../mappers/competitor-price.mapper";
+import { RoomRepository } from "./room.respository";
 
+@Service()
 export class CompetitorsPricesRepository {
   repository: MongoRepository<CompetitorPriceEntity>;
+  roomRepository: RoomRepository;
   constructor() {
     this.repository = getMongoRepository(CompetitorPriceEntity);
+    this.roomRepository = new RoomRepository();
   }
-  async saveEach(
-    competitorsPrice: CompetitorPrice[]
-  ): Promise<CompetitorPrice[]> {
-    let response = [];
-    for (let x in competitorsPrice) {
-      let competitor = competitorsPrice[x];
-
-      let resultCompetitor = await this.save(competitor);
-      response.push(resultCompetitor);
+  async saveEach(competitors: CompetitorPrice[]): Promise<unknown> {
+    let bulk = await this.repository.initializeOrderedBulkOp();
+    for (let x in competitors) {
+      const mapper = new CompetitorPriceMapper();
+      let competitor: CompetitorPrice = competitors[x];
+      const where = {
+        where: {
+          room_remote_id: competitor.room.remote_id,
+          date: competitor.date,
+          name: competitor.name,
+        },
+      };
+      bulk
+        .find({
+          room_remote_id: competitor.room.remote_id,
+          date: competitor.date,
+          name: competitor.name,
+        })
+        .upsert()
+        .update({ $set: mapper.toEntity(competitor) });
     }
-    return response;
+    await bulk.execute();
+
+    return null;
   }
 
   async save(competitor: CompetitorPrice): Promise<CompetitorPrice> {
     let found = await this.findByValues(competitor);
+
     if (!found) {
       const mapper = new CompetitorPriceMapper();
-      let result = await this.repository.save(mapper.toEntity(competitor));
+      let result = await this.repository.save(competitor);
       return mapper.execute(result);
     }
-
+    //updated record for this competitor
+    competitor.updated_at = new Date();
+    await this.repository.update(found.id, competitor);
     return found;
   }
 
   async findByValues(competitor: CompetitorPrice): Promise<CompetitorPrice> {
-    const result = await this.repository.findOne({
+    const where = {
       where: {
         "room.remote_id": competitor.room.remote_id,
         date: competitor.date,
         name: competitor.name,
       },
-    });
+    };
+    console.log(where);
+    const result = await this.repository.findOne();
     const mapper = new CompetitorPriceMapper();
     return mapper.execute(result);
   }
@@ -76,10 +92,6 @@ export class CompetitorsPricesRepository {
         {
           $match: {
             "room.remote_id": room_id,
-            date: {
-              $gte: new Date("2022-02-01T00:00:00.000Z"),
-              $lte: new Date("2022-03-03T00:00:00.000Z"),
-            },
           },
         },
         {
@@ -120,7 +132,7 @@ export class CompetitorsPricesRepository {
     let pipe = [
       {
         $match: {
-          "room.remote_id": room_id,
+          room_remote_id: room_id,
           date: date,
         },
       },
@@ -133,7 +145,7 @@ export class CompetitorsPricesRepository {
             $push: {
               id: "$_id",
               name: "$name",
-              room_id: "$room.remote_id",
+              room_id: "$room_remote_id",
               date: "$date",
               room: "$room",
               price: "$price",
@@ -161,7 +173,7 @@ export class CompetitorsPricesRepository {
     const pipe = [
       {
         $match: {
-          "room.remote_id": room_id,
+          room_remote_id: room_id,
           date: date,
         },
       },
@@ -174,7 +186,7 @@ export class CompetitorsPricesRepository {
             $push: {
               id: "$_id",
               name: "$name",
-              room_id: "$room.remote_id",
+              room_id: "$room_emote_id",
               date: "$date",
               room: "$room",
               price: "$price",
@@ -208,7 +220,7 @@ export class CompetitorsPricesRepository {
         },
         {
           $match: {
-            "room.remote_id": room_id,
+            room_remote_id: room_id,
             date: date,
           },
         },
@@ -239,7 +251,7 @@ export class CompetitorsPricesRepository {
       //get the document with current data
       let result = await this.repository.findOne({
         where: {
-          "room.remote_id": room_id,
+          room_remote_id: room_id,
           "price.amount": output,
           date: date,
         },
@@ -247,5 +259,27 @@ export class CompetitorsPricesRepository {
       return mapper.fromAggregate(result);
     }
     return null;
+  }
+
+  async getByRoomAndDates(
+    room: Room,
+    start: string,
+    end: string
+  ): Promise<CompetitorPrice[]> {
+    const where = {
+      where: {
+        room_remote_id: room.remote_id,
+        date: { $gte: new Date(start), $lte: new Date(end) },
+      },
+    };
+
+    const mapper = new CompetitorPriceMapper();
+    let competitors = [];
+    let results = await this.repository.find(where);
+
+    for (let x in results) {
+      competitors.push(mapper.execute(results[x]));
+    }
+    return competitors;
   }
 }

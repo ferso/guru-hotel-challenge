@@ -5,7 +5,7 @@ import { Room } from "src/hotel-prices/domain/model/room.model";
 const dotenv = require("dotenv");
 dotenv.config();
 
-describe("Hotel Room specs", () => {
+describe.skip("Hotel Room specs", () => {
   it("validate props in Room model", () => {
     let props = {
       id: "12312312312",

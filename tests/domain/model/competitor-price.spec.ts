@@ -5,10 +5,10 @@ import { Currencies } from "src/shared/domain/enums/currencies";
 import { Currency } from "src/shared/domain/value-object/currency.value";
 import { Price } from "src/shared/domain/value-object/price.model";
 
-const dotenv = require("dotenv");
-dotenv.config();
+import { config } from "tests/config";
 
-describe("CompetitorPrice specs", () => {
+describe.skip("CompetitorPrice specs", () => {
+  config();
   it("validate props in CompetitorPrice model", () => {
     let props = {
       id: "12312312312",

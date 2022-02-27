@@ -19,6 +19,7 @@ export class Hotel {
   state?: string;
   rooms?: Room[] = [];
   remote_id?: number;
+  remote_hotel_id: number;
   created_at?: Date;
   updated_at?: Date;
 
@@ -50,6 +51,10 @@ export class Hotel {
   }
   setRoom(room: Room) {
     this.rooms.push(room);
+  }
+
+  setAllRooms(rooms: Room[]) {
+    this.rooms = rooms;
   }
   setUpdatedAt(date: Date) {
     this.updated_at = date;

@@ -1,10 +1,8 @@
 import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { Room } from "src/hotel-prices/domain/model/room.model";
-
-const dotenv = require("dotenv");
-dotenv.config();
-// const hotels = require("../../database/mock-data/hotels.json");
-describe("Hotel Model specs", () => {
+import { config } from "tests/config";
+describe.skip("Hotel Model specs", () => {
+  config();
   it("validate props in Hotel model", () => {
     let props = {
       id: "12312312312",

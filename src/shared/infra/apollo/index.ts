@@ -1,12 +1,17 @@
-import { ApolloError, ApolloServer, gql } from "apollo-server";
 import { Logger } from "../logger/logger";
 import { buildSchema } from "type-graphql";
+import { ApolloError, ApolloServer } from "apollo-server";
 import { PingResolver } from "../graphql/resolver/ping.resolver";
 import { HotelResolver } from "src/hotel-prices/infra/graphql/resolvers/hotel.resolver";
 import { ErrorBase } from "src/shared/exceptions/error-base.exception";
 import { UserResolver } from "../graphql/resolver/user.resolver";
-import { authChecker } from "../graphql/middleware/authorization-checker.middleware";
+import { Container } from "typedi";
+import { CustomAuthChecker } from "./middleware/authorization.middleware";
+import { ApolloServerPluginCacheControl } from "apollo-server-core";
 
+const { BaseRedisCache } = require("apollo-server-cache-redis");
+import Redis from "ioredis";
+import { GetHotelMetricsService } from "src/hotel-prices/application/services/get-hotel-metrics.service";
 export class ApolloServerAdapter {
   logger: Logger;
   server: ApolloServer;
@@ -17,18 +22,30 @@ export class ApolloServerAdapter {
   }
   async setSetServer() {
     this.server = new ApolloServer({
-      introspection: true,
       debug: false,
+      introspection: true,
+      // plugins: [
+      //   ApolloServerPluginCacheControl({
+      //     defaultMaxAge: 30,
+      //   }),
+      // ],
+
+      cache: new BaseRedisCache({
+        plugins: [ApolloServerPluginCacheControl()],
+        client: new Redis({
+          host: "localhost",
+        }),
+      }),
       schema: await buildSchema({
+        emitSchemaFile: true,
         resolvers: [PingResolver, HotelResolver, UserResolver],
+        container: Container,
+        authChecker: CustomAuthChecker,
       }),
       context: ({ req, res }) => ({ req, res }),
       formatError(error) {
         if (error.originalError instanceof ErrorBase) {
-          return new ApolloError(
-            error.message,
-            error.extensions.exception.name
-          );
+          return new ApolloError(error.message, error.originalError.name);
         }
         return error;
       },

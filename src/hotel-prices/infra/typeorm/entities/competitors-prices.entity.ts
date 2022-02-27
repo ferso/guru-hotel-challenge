@@ -1,6 +1,4 @@
-import { CompetitorPrice } from "src/hotel-prices/domain/model/competitor-price.model";
-import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
-import { Room } from "src/hotel-prices/domain/model/room.model";
+import { ObjectId } from "mongodb";
 import { Price } from "src/shared/domain/value-object/price.model";
 import {
   Entity,
@@ -16,6 +14,9 @@ export class CompetitorPriceEntity {
   @ObjectIdColumn()
   id: string;
 
+  @Column((type) => ObjectId)
+  room_id: string;
+
   @Column()
   @Index("date_idx")
   date: Date;
@@ -24,10 +25,13 @@ export class CompetitorPriceEntity {
   name: string;
 
   @Column()
-  price: Price;
+  room_remote_id: string;
 
   @Column()
-  room?: Room;
+  hotel_remote_id: string;
+
+  @Column()
+  price: Price;
 
   @CreateDateColumn({
     name: "created_at",

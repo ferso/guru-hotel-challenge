@@ -26,7 +26,6 @@ export class UserRepository {
 
   async findByEmail(user: User): Promise<User> {
     let entity = await this.repository.findOne({ email: user.email });
-
     return new UserMapper().fromEntity(entity);
   }
 }

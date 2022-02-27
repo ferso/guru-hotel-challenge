@@ -1,17 +1,26 @@
 version: "3"
 services:
   challenge:
+    container_name: challenge
     restart: always
     build: .
+    env_file: .env.docker
     ports:
       - 3000:3000
     volumes:
       - ./:/code
-  mongo:
+    depends_on:
+      - mongodb
+  mongodb:
+    container_name: mongo-server
     image: mongo
     ports:
-      - 27018:27017
+      - 27017:27017
     volumes:
       - mongodb:/data/db
 volumes:
   mongodb:
+
+networks:
+  some-net:
+    driver: bridge

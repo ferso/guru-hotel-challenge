@@ -1,18 +1,25 @@
 import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { IHotelRepository } from "src/hotel-prices/domain/repositories/hotel.repository";
-import {
-  getConnection,
-  MongoClient,
-  MongoRepository,
-  getMongoRepository,
-} from "typeorm";
+import { MongoClient, MongoRepository, getMongoRepository } from "typeorm";
 import { HotelEntity } from "src/hotel-prices/infra/typeorm/entities/hotel.entity";
-import { HotelMapper } from "src/hotel-prices/infra/typeorm/mappers/Hotel.mapper";
+import { HotelMapper } from "src/hotel-prices/infra/typeorm/mappers/hotel.mapper";
+import { Logger } from "src/shared/infra/logger/logger";
+import { stat } from "fs";
+import { UnAvailbleApiError } from "src/shared/exceptions/unavailable-api.exception";
+import { DatabaseException } from "src/shared/exceptions/database.exception";
+import { Service } from "typedi";
 
+@Service()
 export class HotelRepository implements IHotelRepository {
   hotelRepository: MongoRepository<HotelEntity>;
+  logger: Logger;
   constructor() {
-    this.hotelRepository = getMongoRepository(HotelEntity);
+    this.logger = new Logger();
+    try {
+      this.hotelRepository = getMongoRepository(HotelEntity);
+    } catch (error) {
+      throw new DatabaseException("Database is not available");
+    }
   }
   async save(hotel: Hotel): Promise<Hotel> {
     let result: HotelEntity;
@@ -21,7 +28,6 @@ export class HotelRepository implements IHotelRepository {
       await this.hotelRepository.update(
         { remote_id: hotel.remote_id },
         {
-          rooms: hotel.rooms,
           city: hotel.city,
           state: hotel.state,
           name: hotel.name,
@@ -32,7 +38,6 @@ export class HotelRepository implements IHotelRepository {
     }
     result = await this.hotelRepository.save({
       remote_id: hotel.remote_id,
-      rooms: hotel.rooms,
       city: hotel.city,
       state: hotel.state,
       name: hotel.name,
@@ -100,29 +105,24 @@ export class HotelRepository implements IHotelRepository {
     throw new Error("Method not implemented.");
   }
 
-  async ping(): Promise<any> {
-    try {
-      const config = {
-        connectTimeoutMS: 3,
-        useUnifiedTopology: true,
-      };
-      let connection = this.hotelRepository.manager.connection;
-      const mongodb = (connection.driver as any).mongodb;
-      let client: MongoClient = new mongodb.MongoClient(
-        "mongodb://localhost:27017/hotel-price-api",
-        config
-      ); //
-      client.connect();
-      let tm = setTimeout(() => {
-        client.close();
-        return false;
-      }, 50);
-      await client.db().admin().serverStatus();
-      clearTimeout(tm);
-      client.close();
-      return true;
-    } catch (error) {
-      return false;
-    }
+  async ping(): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.hotelRepository
+          .stats()
+          .then(() => {
+            clearTimeout(tm);
+            return resolve(true);
+          })
+          .catch(() => reject(false));
+        let tm = setTimeout(() => {
+          this.logger.error("Database timeout");
+          return reject(false);
+        }, 50);
+      } catch (error) {
+        console.error("jere");
+        throw new DatabaseException(error.message);
+      }
+    });
   }
 }

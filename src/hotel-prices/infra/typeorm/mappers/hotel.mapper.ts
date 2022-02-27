@@ -1,5 +1,4 @@
 import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
-import { Room } from "src/hotel-prices/domain/model/room.model";
 import { HotelEntity } from "../entities/hotel.entity";
 
 export class HotelMapper {
@@ -8,26 +7,19 @@ export class HotelMapper {
     this.hotel = hotel;
   }
   execute(): Hotel {
-    if (this.hotel) {
+    return this.fromEntity(this.hotel);
+  }
+  fromEntity(entity: HotelEntity) {
+    if (entity) {
       const hotel = new Hotel({
-        name: this.hotel?.name,
-        city: this.hotel?.city,
-        state: this.hotel?.state,
-        remote_id: this.hotel.remote_id,
-        updated_at: this.hotel.updated_at,
-        created_at: this.hotel.created_at,
+        id: entity.id,
+        name: entity?.name,
+        city: entity?.city,
+        state: entity?.state,
+        remote_id: entity.remote_id,
+        updated_at: entity.updated_at,
+        created_at: entity.created_at,
       });
-      for (let x in this.hotel.rooms) {
-        let room = new Room({
-          id: this.hotel.rooms[x].id,
-          remote_id: this.hotel.rooms[x].id,
-          name: this.hotel.rooms[x].name,
-          type: this.hotel.rooms[x].type,
-          bed_count: this.hotel.rooms[x].bed_count,
-          amenities: this.hotel.rooms[x].amenities,
-        });
-        hotel.setRoom(room);
-      }
       return hotel;
     }
     return null;

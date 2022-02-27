@@ -7,9 +7,10 @@ import { Currency } from "src/shared/domain/value-object/currency.value";
 import { Price } from "src/shared/domain/value-object/price.model";
 import { UnAvailbleApiError } from "src/shared/exceptions/unavailable-api.exception";
 import { Logger } from "src/shared/infra/logger/logger";
-
 import moment from "moment";
+import { Service } from "typedi";
 
+@Service()
 export class GetCompetitorsPricesAdapter {
   http: AxiosStatic;
   id: number;
@@ -24,10 +25,10 @@ export class GetCompetitorsPricesAdapter {
     end: string
   ): Promise<CompetitorPrice[]> {
     try {
-      let result = await this.http.get(
-        `http://localhost:5000/hotels/${id}/prices?start_date=${start}&end_date=${end}`
-      );
-
+      const endpoint = `${process.env.API_URL}/hotels/${id}/prices?start_date=${start}&end_date=${end}`;
+      this.logger.info(`fetching competitors from remote ${id}`);
+      this.logger.info(`${endpoint}`);
+      let result = await this.http.get(endpoint);
       return this.mapper(result?.data, id);
     } catch (error) {
       this.logger.error(error.toString());

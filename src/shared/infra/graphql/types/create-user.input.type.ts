@@ -1,4 +1,3 @@
-import { RolesType } from "src/shared/domain/model/user.model";
 import { ArgsType, Field, InputType } from "type-graphql";
 import {
   MaxLength,
@@ -7,6 +6,7 @@ import {
   MinLength,
   Matches,
 } from "class-validator";
+import { RolesType } from "src/shared/domain/enums/roles-type";
 
 @ArgsType()
 export class CreateUserInput {

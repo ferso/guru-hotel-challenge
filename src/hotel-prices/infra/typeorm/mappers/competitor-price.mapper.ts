@@ -1,18 +1,15 @@
 import { CompetitorPrice } from "src/hotel-prices/domain/model/competitor-price.model";
-import { Hotel } from "src/hotel-prices/domain/model/hotel.model";
 import { Room } from "src/hotel-prices/domain/model/room.model";
 import { Currencies } from "src/shared/domain/enums/currencies";
 import { Currency } from "src/shared/domain/value-object/currency.value";
 import { Price } from "src/shared/domain/value-object/price.model";
 import { CompetitorPriceEntity } from "../entities/competitors-prices.entity";
-import { HotelEntity } from "../entities/hotel.entity";
 
 export class CompetitorPriceMapper {
   execute(competitor?: CompetitorPriceEntity): CompetitorPrice {
     if (competitor) {
       return new CompetitorPrice({
-        id: competitor?.id,
-        room: competitor.room,
+        id: competitor.id,
         date: competitor.date,
         name: competitor.name,
         price: new Price({
@@ -20,6 +17,8 @@ export class CompetitorPriceMapper {
           amount: competitor.price.amount,
           tax: competitor.price.tax,
         }),
+        room_remote_id: competitor.room_remote_id,
+        hotel_remote_id: competitor.hotel_remote_id,
       });
     }
   }
@@ -27,9 +26,8 @@ export class CompetitorPriceMapper {
     return {
       name: competitor.name,
       date: competitor.date,
-      room: {
-        remote_id: competitor.room.remote_id,
-      },
+      room_remote_id: competitor.room.remote_id,
+      hotel_id: competitor.hotel.remote_id,
       price: {
         amount: competitor.price.amount,
         tax: competitor.price.tax,

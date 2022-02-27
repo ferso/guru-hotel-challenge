@@ -30,9 +30,6 @@ export class HotelEntity {
   @Index("state_idx", { fulltext: true })
   state: string;
 
-  @Column()
-  rooms: Room[];
-
   @CreateDateColumn({
     name: "created_at",
     nullable: false,
