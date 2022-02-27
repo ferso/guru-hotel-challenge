@@ -13,6 +13,7 @@ Backend - Internal tools
 
 [A PDF documentation ](docs/hotel-room-prices-api.pdf)
 
+[Miro Diagram](https://miro.com/app/board/uXjVOLJ2_yk=/?invite_link_id=942219701434 "Miro Diagram")
 
 ##### Running app
 
