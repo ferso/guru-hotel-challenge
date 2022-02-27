@@ -1,0 +1,10 @@
+{
+  "type": "mongodb",
+  "host": "mongo-server",
+  "post": 27017,
+  "database": "hotel-price-api",
+  "synchronize": true,
+  "logging": true,
+  "entities": ["src/**/*.entity.ts"],
+  "useUnifiedTopology": true
+}

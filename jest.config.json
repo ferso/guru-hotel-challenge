@@ -1,0 +1,15 @@
+{
+  "testTimeout": 1500000,
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "./",
+  "modulePaths": ["node_modules", "<rootDir>"],
+  "testEnvironment": "node",
+  "testRegex": ".spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "@monopre/(.+)$": "<rootDir>packages/$1/src"
+  },
+  "moduleDirectories": ["node_modules"]
+}

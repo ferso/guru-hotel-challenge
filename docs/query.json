@@ -1,0 +1,91 @@
+db.getCollection('rooms').aggregate([
+    {
+     $match: { 
+           _id:  ObjectId("62136d95172b1839fcdaa399")         
+               
+        }
+   },
+     {$lookup:{
+         from:'competitors',
+         localField:'_id',
+         foreignField:"room_id",
+         as:'competitors'
+         }},
+ {
+   $project: 
+   {
+     name: 1,
+     competitors: 
+     { 
+       $filter: 
+       { 
+         input: "$competitors", 
+         as: "item", 
+         cond: { $and:[
+                  { $gte: [ "$$item.date",  new ISODate("2022-02-26") ] },
+                  { $lt: [ "$$item.date",  new ISODate("2022-03-27")] }
+                ]}
+       } 
+     } 
+   } 
+ }         
+ ])
+
+
+ async findCompetitorsFromRemoteHotelId(
+ hotel: Hotel,
+ limit: number,
+ start: string,
+ end: string
+): Promise<Room[]> {
+ let pipe = [
+   { $limit: limit },
+   {
+     $match: {
+       remote_hotel_id: hotel.remote_id,
+     },
+   },
+   {
+     $lookup: {
+       from: "competitors",
+       localField: "_id",
+       foreignField: "room_id",
+       as: "competitors",
+     },
+   },
+   {
+     $project: {
+       name: 1,
+       remote_id: 1,
+       type: 1,
+       bed_count: 1,
+       amenities: 1,
+       competitors: {
+         $filter: {
+           input: "$competitors",
+           as: "item",
+           cond: {
+             $and: [
+               { $gte: ["$$item.date", new Date(start)] },
+               { $lte: ["$$item.date", new Date(end)] },
+             ],
+           },
+         },
+       },
+     },
+   },
+ ];
+
+ // console.log(pipe);
+ // console.log(pipe[2]["$project"]);
+ // console.log(pipe[2]["$project"].competitors["$filter"]);
+ console.log(pipe[3]["$project"].competitors["$filter"].cond["$and"]);
+ let rooms = [];
+ let results = await this.repository.aggregate(pipe).toArray();
+ console.log(results);
+ for (let x in results) {
+   rooms.push(RoomMapper.fromAggregate(results[x]));
+ }
+
+ return rooms;
+}
