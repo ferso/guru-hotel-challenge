@@ -29,9 +29,9 @@ Backend - Internal tools
  There are 3 diferentes .env files, you can change the values in order to set  local enviroments values, docker env file is for runing docker composer with differentes settings
 
 env example
-	`APP_PORT=3000
-	APP_SECRET=D810B6518556468A10548A292EF12C37BF5F2D42
 
+	` APP_PORT=3000
+	APP_SECRET=D810B6518556468A10548A292EF12C37BF5F2D42
 	API_URL = http://external-api:5000
 	TYPEORM_CONNECTION = mongodb
 	TYPEORM_HOST = mongo-server
